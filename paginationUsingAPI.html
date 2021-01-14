@@ -1,0 +1,131 @@
+<html>
+<head>
+<title>Pagination</title>
+<style>
+
+    h1{
+        text-align: center;
+        color: rgb(130, 0, 50);
+    }
+        .active{
+            border-color: rgb(52, 20, 230);
+            color: green;
+            
+        }
+
+        th{
+            background-color: rgb(38, 131, 134);
+        }
+
+        table{
+            
+            border: rgb(58, 4, 15);
+            background-color: rgb(17, 30, 207);
+        }
+        tr{
+            background-color: rgb(238, 213, 75);
+        }
+        button{
+           
+            background-color: rgb(228, 142, 195);
+        }
+        </style>
+</head>
+<body>
+    <h1>PAGINATION</h1>
+    <hr>
+<div id="table"></div>
+<div id="pagination"></div>
+<script>
+            
+            document.oncontextmenu = document.body.oncontextmenu = function() {return false;}
+                var totalNumberOfPage = 0;
+                var totalNumberOfRecord = 0;
+                const data_per_page = 20;
+               const fetchPassangers = (pageNumber) => {
+                    var tableData = document.getElementById('table');
+                    tableData.innerHTML = '';
+                    fetch(`https://api.instantwebtools.net/v1/passenger?page=${pageNumber}&size=${data_per_page}`).then(async(res) => {
+                        var response = await res.json();
+                        totalNumberOfPage = response.totalPages;
+                        totalNumberOfRecord = response.totalPassengers;
+                        let rows = response.data.length ? response.data.map((res) => `<tr>
+                            <td>${res._id}</td>
+                            <td>${res.name}</td>
+                            <td>${res.trips}</td>
+                            <td>${res.airline.id}</td>
+                            <td>${res.airline.name}</td>
+                            <td>${res.airline.established}</td>
+                            <td>${res.airline.country}</td>
+                            <td>${res.airline.slogan}</td>
+                            <td>${res.airline.head_quaters}</td>
+                            
+                        </tr>`).join(' ') : [`<tr>
+                            <td colspan="6"> No Data </td>
+                        </tr>`].join(' ');
+                        let table = document.createElement('table');
+                     
+                        table.innerHTML = `
+                                    <thead>
+                                        <th>Passenger_ID</th>
+                                        <th>Passenger_Name</th>
+                                        <th>Trips</th>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Established</th>
+                                        <th>country</th>
+                                        <th>Slogan</th>
+                                        <th>Head_quaters</th>
+                                    </thead>
+                                <tbody>${rows}</tbody>`;
+                        tableData.append(table);
+                        renderPagination(pageNumber);
+                    });
+                }
+                function range(size, startAt = 0, positive = true) {
+                    return [...Array(size).keys()].map(i => positive ? i + startAt : Math.abs(i - startAt));
+                }
+                const renderPagination = (currentPage) => {
+                    var pagesContainer = document.getElementById("pagination");
+                    pagesContainer.innerHTML = '';
+                    var disableNextKey = false;
+                    var disablePreviousKey = false;
+                    if(currentPage === totalNumberOfPage){
+                        disableNextKey = true;
+                    }
+                    if(currentPage === 1){
+                        disablePreviousKey = true;
+                    }
+                    var pageRange = [];
+                    if(totalNumberOfPage - 5 > currentPage){ 
+                        pageRange = range(5, currentPage);
+                    }else{
+                        var diff = totalNumberOfPage - currentPage;
+                        var posRange = range(diff, currentPage);
+                        var negRange = range(5 - diff, diff ? currentPage-1 : currentPage, false);
+                        pageRange = [...negRange.reverse(), ...posRange];
+                    }
+                    var btns = pageRange.map(r => `<button id=${r} class="buttonsss${r === currentPage ? ' active' : ' '}">${r}</button>`).join(' ');
+                    var btnCls = document.getElementsByClassName('buttonsss');
+                    var div = document.createElement('div');
+                    div.innerHTML = [
+                        `<button id="1" class="buttonsss" ${disablePreviousKey && 'disabled'}>First</button>`,
+                        `<button id=${currentPage-1} class="buttonsss" ${disablePreviousKey && 'disabled'}>Prev</button>`,
+                        btns,
+                        `<button id=${currentPage+1} class="buttonsss" ${disableNextKey && 'disabled'}>Next</button>`,
+                        `<button id=${totalNumberOfPage} class="buttonsss" ${disableNextKey && 'disabled'}>Last</button>`
+                    ].join(' ');
+                    pagesContainer.append(div);
+                    for (var i = 0; i < btnCls.length; i++) {
+                        btnCls[i].addEventListener('click', myFunction, false);
+                    }
+                }
+                const  myFunction = (e) => {
+                    var page = parseInt(e.target.id);
+                    fetchPassangers(page);
+                }
+                fetchPassangers(1);
+            </script>
+</body>
+</html>
+
